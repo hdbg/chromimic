@@ -8,7 +8,7 @@
 //
 // `tokio = { version = "1", features = ["full"] }`
 
-use reqwest_impersonate as reqwest;
+use mimic as reqwest;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {

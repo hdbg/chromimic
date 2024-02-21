@@ -1,5 +1,5 @@
 #![cfg(not(target_arch = "wasm32"))]
-use reqwest_impersonate as reqwest;
+use mimic as reqwest;
 
 #[cfg(all(feature = "__tls", not(feature = "rustls-tls-manual-roots")))]
 #[tokio::test]

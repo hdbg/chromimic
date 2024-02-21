@@ -1,4 +1,4 @@
-use reqwest_impersonate as reqwest;
+use mimic as reqwest;
 mod support;
 
 use http::header::CONTENT_TYPE;

@@ -1,5 +1,5 @@
 #![deny(warnings)]
-use reqwest_impersonate as reqwest;
+use mimic as reqwest;
 
 // This is using the `tokio` runtime. You'll need the following dependency:
 //

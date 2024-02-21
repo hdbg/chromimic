@@ -1,6 +1,8 @@
-# reqwest
+# mimic
 
-A fork of reqwest used to impersonate the Chrome browser / OkHttp. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
+A fork of reqwest-impersonate used to impersonate the Chrome browser / OkHttp. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
+
+Fork with vendored certificates supports for `boringssl`
 
 This crate was intended to be an experiment to learn more about TLS and HTTP2 fingerprinting. Some parts of reqwest may not have the code needed to work when used to copy Chrome.
 
