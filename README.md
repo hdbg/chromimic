@@ -1,6 +1,6 @@
 # mimic
 
-A fork of reqwest-impersonate used to impersonate the Chrome browser / OkHttp. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
+A fork of reqwest-impersonate used to impersonate the Chrome browser / OkHttp with default certs. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
 
 Fork with vendored certificates supports for `boringssl`
 
@@ -15,7 +15,7 @@ These patches were made specifically for `reqwest` to work, but I would apprecia
 `Cargo.toml`
 
 ```toml
-reqwest = { package = "reqwest-impersonate", version = "0.11.46", default-features = false, features = [
+reqwest = { package = "mimic", version = "0.11.46", default-features = false, features = [
     "boring-tls",
     "impersonate",
     "blocking",
