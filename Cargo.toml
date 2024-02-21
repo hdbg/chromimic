@@ -1,5 +1,5 @@
 [package]
-name = "reqwest-impersonate"
+name = "mimic"
 version = "0.11.51"                                                 # remember to update html_root_url
 description = "An easy and powerful Rust HTTP Client (Impersonate Chrome/OkHttp)"
 keywords = ["http", "request", "client"]
