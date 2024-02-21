@@ -29,6 +29,8 @@ fn create_ssl_connector() -> SslConnectorBuilder {
 
     builder.set_default_verify_paths().unwrap();
 
+
+
     builder.set_options(SslOptions::NO_TICKET);
 
     builder.set_grease_enabled(true);

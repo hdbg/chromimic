@@ -38,7 +38,9 @@ rustls-tls-manual-roots = ["__rustls"]
 rustls-tls-webpki-roots = ["webpki-roots", "__rustls"]
 rustls-tls-native-roots = ["rustls-native-certs", "__rustls"]
 
-boring-tls = ["__boring"]
+boring-tls = ["boring-tls-native-roots"]
+boring-tls-webpki-roots = ["__boring", "webpki-roots"]
+boring-tls-native-roots = ["__boring", "rustls-native-certs"]
 
 
 blocking = ["futures-util/io", "tokio/rt-multi-thread", "tokio/sync"]

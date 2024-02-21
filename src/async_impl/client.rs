@@ -26,8 +26,6 @@ use super::decoder::Accepts;
 use super::request::{Request, RequestBuilder};
 use super::response::Response;
 use super::Body;
-#[cfg(feature = "__impersonate")]
-use crate::impersonate::{configure_impersonate, Impersonate};
 #[cfg(feature = "http3")]
 use crate::async_impl::h3_client::connect::H3Connector;
 #[cfg(feature = "http3")]
@@ -39,6 +37,10 @@ use crate::cookie;
 use crate::dns::trust_dns::TrustDnsResolver;
 use crate::dns::{gai::GaiResolver, DnsResolverWithOverrides, DynResolver, Resolve};
 use crate::error;
+#[cfg(feature = "impersonate")]
+use crate::impersonate::profile::ClientProfile;
+#[cfg(feature = "__impersonate")]
+use crate::impersonate::{configure_impersonate, Impersonate};
 use crate::into_url::{expect_uri, try_uri};
 use crate::redirect::{self, remove_sensitive_headers};
 #[cfg(feature = "__tls")]
@@ -48,8 +50,6 @@ use crate::Certificate;
 #[cfg(any(feature = "native-tls", feature = "__rustls"))]
 use crate::Identity;
 use crate::{IntoUrl, Method, Proxy, StatusCode, Url};
-#[cfg(feature = "impersonate")]
-use crate::impersonate::profile::ClientProfile;
 use log::{debug, trace};
 #[cfg(feature = "http3")]
 use quinn::TransportConfig;
@@ -363,7 +363,8 @@ impl ClientBuilder {
                         transport_config.send_window(send_window);
                     }
 
-                    let local_address = local_address_v6.map(|v| IpAddr::from(v))
+                    let local_address = local_address_v6
+                        .map(|v| IpAddr::from(v))
                         .or(local_address_v4.map(|v| IpAddr::from(v)));
 
                     let res = H3Connector::new(
@@ -388,22 +389,45 @@ impl ClientBuilder {
             #[cfg(feature = "__tls")]
             match config.tls {
                 #[cfg(feature = "__boring")]
-                TlsBackend::BoringTls(tls) => Connector::new_boring_tls(
-                    http,
-                    tls,
-                    proxies.clone(),
-                    user_agent(&config.headers),
-                    config.local_address_ipv4,
-                    config.local_address_ipv6,
-                    config.nodelay,
-                    config.tls_info,
-                    ImpersonateContext {
-                        client_profile: config.client_profile,
-                        certs_verification: config.certs_verification,
-                        enable_ech_grease: config.enable_ech_grease,
-                        permute_extensions: config.permute_extensions,
-                    },
-                ),
+                TlsBackend::BoringTls(tls) => {
+                    #[cfg(feature = "boring-tls-native-roots")]
+                    let tls = Arc::new(move || {
+                        let mut builder = tls.clone()();
+
+                        use boring::x509::X509;
+                        let certs = rustls_native_certs::load_native_certs().unwrap();
+
+                        let cert_store = builder.cert_store_mut();
+
+                        for certificate in certs {
+                            // I know this is bad but what do I have to do else
+
+                            let boring_cert = X509::from_der(&certificate.as_ref()).unwrap();
+
+                            cert_store.add_cert(boring_cert).unwrap();
+                        }
+                        builder
+                    });
+
+                    let connector = Connector::new_boring_tls(
+                        http,
+                        tls,
+                        proxies.clone(),
+                        user_agent(&config.headers),
+                        config.local_address_ipv4,
+                        config.local_address_ipv6,
+                        config.nodelay,
+                        config.tls_info,
+                        ImpersonateContext {
+                            client_profile: config.client_profile,
+                            certs_verification: config.certs_verification,
+                            enable_ech_grease: config.enable_ech_grease,
+                            permute_extensions: config.permute_extensions,
+                        },
+                    );
+
+                    connector
+                }
                 #[cfg(feature = "default-tls")]
                 TlsBackend::Default => {
                     let mut tls = TlsConnector::builder();
@@ -1332,11 +1356,11 @@ impl ClientBuilder {
         match addr.into() {
             Some(IpAddr::V4(v4)) => {
                 self.config.local_address_ipv4 = Some(v4);
-            },
+            }
             Some(IpAddr::V6(v6)) => {
                 self.config.local_address_ipv6 = Some(v6);
-            },
-            _ => {},
+            }
+            _ => {}
         }
         self
     }
