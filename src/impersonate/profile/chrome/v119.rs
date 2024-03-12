@@ -29,7 +29,7 @@ pub(crate) fn get_settings(headers: HeaderMap) -> ImpersonateSettings {
     }
 }
 
-fn create_ssl_connector() -> SslConnectorBuilder {
+fn create_ssl_connector(h2: bool) -> SslConnectorBuilder {
     let mut builder = SslConnector::builder(SslMethod::tls_client()).unwrap();
 
     builder.set_default_verify_paths().unwrap();
@@ -75,7 +75,11 @@ fn create_ssl_connector() -> SslConnectorBuilder {
 
     builder.enable_signed_cert_timestamps();
 
-    builder.set_alpn_protos(b"\x02h2\x08http/1.1").unwrap();
+    if h2 {
+        builder.set_alpn_protos(b"\x02h2\x08http/1.1").unwrap();
+    } else {
+        builder.set_alpn_protos(b"\x08http/1.1").unwrap();
+    }
 
     builder
         .add_cert_compression_alg(CertCompressionAlgorithm::Brotli)
@@ -93,7 +97,7 @@ fn create_ssl_connector() -> SslConnectorBuilder {
 }
 
 fn create_headers(mut headers: HeaderMap) -> HeaderMap {
-    headers.insert(CACHE_CONTROL, "max-age=0".parse().unwrap());
+    headers.insert(CACHE_CONTROL, HeaderValue::from_static("max-age=0"));
     headers.insert(
         "sec-ch-ua",
         HeaderValue::from_static(
@@ -101,11 +105,11 @@ fn create_headers(mut headers: HeaderMap) -> HeaderMap {
         ),
     );
     headers.insert("sec-ch-ua-mobile", HeaderValue::from_static("?0"));
-    headers.insert("sec-ch-ua-platform", "\"macOS\"".parse().unwrap());
+    headers.insert("sec-ch-ua-platform", HeaderValue::from_static("\"macOS\""));
     headers.insert(DNT, HeaderValue::from_static("1"));
     headers.insert(UPGRADE_INSECURE_REQUESTS, HeaderValue::from_static("1"));
-    headers.insert(USER_AGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0".parse().unwrap());
-    headers.insert(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0"));
+    headers.insert(ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
     headers.insert("sec-fetch-site", HeaderValue::from_static("none"));
     headers.insert("sec-fetch-mode", HeaderValue::from_static("navigate"));
     headers.insert("sec-fetch-user", HeaderValue::from_static("?1"));
@@ -116,7 +120,7 @@ fn create_headers(mut headers: HeaderMap) -> HeaderMap {
     );
     headers.insert(
         ACCEPT_LANGUAGE,
-        "en;q=0.8,en-GB;q=0.7,en-US;q=0.6".parse().unwrap(),
+        HeaderValue::from_static("en;q=0.8,en-GB;q=0.7,en-US;q=0.6"),
     );
 
     headers

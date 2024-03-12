@@ -263,10 +263,19 @@ impl ClientBuilder {
             },
         }
     }
-    /// Sets the necessary values to mimic the specified Chrome version.
+
+    /// Sets the necessary values to mimic the specified impersonate version.
     #[cfg(feature = "__impersonate")]
     pub fn impersonate(mut self, ver: Impersonate) -> ClientBuilder {
         self.config.client_profile = ver.profile();
+        configure_impersonate(ver, self)
+    }
+
+    /// Sets the necessary values to mimic the specified impersonate version. (websocket)
+    #[cfg(feature = "__impersonate")]
+    pub fn impersonate_websocket(mut self, ver: Impersonate) -> ClientBuilder {
+        self.config.client_profile = ver.profile();
+        self = self.http1_only();
         configure_impersonate(ver, self)
     }
 
@@ -391,8 +400,8 @@ impl ClientBuilder {
                 #[cfg(feature = "__boring")]
                 TlsBackend::BoringTls(tls) => {
                     #[cfg(feature = "boring-tls-native-roots")]
-                    let tls = Arc::new(move || {
-                        let mut builder = tls.clone()();
+                    let tls = Arc::new(move |h2: bool| {
+                        let mut builder = tls.clone()(h2);
 
                         use boring::x509::X509;
                         let certs = rustls_native_certs::load_native_certs().unwrap();
@@ -423,6 +432,10 @@ impl ClientBuilder {
                             certs_verification: config.certs_verification,
                             enable_ech_grease: config.enable_ech_grease,
                             permute_extensions: config.permute_extensions,
+                            h2: match config.http_version_pref {
+                                HttpVersionPref::Http1 => false,
+                                HttpVersionPref::Http2 | HttpVersionPref::All => true,
+                            },
                         },
                     );
 
@@ -1620,7 +1633,7 @@ impl ClientBuilder {
     #[cfg_attr(docsrs, doc(cfg(feature = "boring-tls")))]
     pub fn use_boring_tls(
         mut self,
-        builder_func: Arc<dyn Fn() -> boring::ssl::SslConnectorBuilder + Send + Sync>,
+        builder_func: Arc<dyn Fn(bool) -> boring::ssl::SslConnectorBuilder + Send + Sync>,
     ) -> ClientBuilder {
         self.config.tls = TlsBackend::BoringTls(builder_func);
         self

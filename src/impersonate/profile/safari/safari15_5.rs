@@ -27,7 +27,7 @@ pub(crate) fn get_settings(headers: HeaderMap) -> ImpersonateSettings {
     }
 }
 
-fn create_ssl_connector() -> SslConnectorBuilder {
+fn create_ssl_connector(h2: bool) -> SslConnectorBuilder {
     let mut builder = SslConnector::builder(SslMethod::tls_client()).unwrap();
 
     builder.set_default_verify_paths().unwrap();
@@ -90,7 +90,11 @@ fn create_ssl_connector() -> SslConnectorBuilder {
         ])
         .unwrap();
 
-    builder.set_alpn_protos(b"\x02h2\x08http/1.1").unwrap();
+    if h2 {
+        builder.set_alpn_protos(b"\x02h2\x08http/1.1").unwrap();
+    } else {
+        builder.set_alpn_protos(b"\x08http/1.1").unwrap();
+    }
 
     builder.enable_signed_cert_timestamps();
 
@@ -106,7 +110,7 @@ fn create_ssl_connector() -> SslConnectorBuilder {
 }
 
 fn create_headers(mut headers: HeaderMap) -> HeaderMap {
-    headers.insert(USER_AGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15".parse().unwrap());
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15"));
     headers.insert(
         ACCEPT,
         HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
