@@ -1,4 +1,4 @@
-# mimic
+# chromimic
 
 A fork of reqwest-impersonate used to impersonate the Chrome browser / OkHttp with default certs. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
 
