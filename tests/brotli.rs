@@ -1,5 +1,5 @@
 mod support;
-use mimic as reqwest;
+use chromimic as reqwest;
 use std::io::Read;
 use support::server;
 

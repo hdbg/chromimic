@@ -5,7 +5,7 @@
 //! more code.
 
 // These require the `serde` dependency.
-use mimic as reqwest;
+use chromimic as reqwest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

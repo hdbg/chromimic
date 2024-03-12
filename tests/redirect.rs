@@ -2,7 +2,7 @@
 mod support;
 use futures_util::stream::StreamExt;
 use hyper::Body;
-use mimic as reqwest;
+use chromimic as reqwest;
 use support::*;
 
 #[tokio::test]

@@ -90,7 +90,7 @@ impl ClientBuilder {
         }
     }
 
-    /// Sets the necessary values to mimic the specified Chrome version.
+    /// Sets the necessary values to chromimic the specified Chrome version.
     #[cfg(feature = "__impersonate")]
     pub fn impersonate(self, ver: Impersonate) -> ClientBuilder {
         self.with_inner(move |inner| inner.impersonate(ver))

@@ -1,5 +1,5 @@
 #![cfg(not(target_arch = "wasm32"))]
-use mimic as reqwest;
+use chromimic as reqwest;
 
 #[cfg(all(feature = "__tls", not(feature = "rustls-tls-manual-roots")))]
 #[tokio::test]

@@ -1,5 +1,5 @@
 #![deny(warnings)]
-use mimic as reqwest;
+use chromimic as reqwest;
 
 // This is using the `tokio` runtime. You'll need the following dependency:
 //

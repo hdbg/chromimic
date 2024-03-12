@@ -1,7 +1,7 @@
 //! `cargo run --example blocking --features=blocking`
 #![deny(warnings)]
 
-use mimic as reqwest;
+use chromimic as reqwest;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();

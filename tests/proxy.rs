@@ -1,6 +1,6 @@
 #![cfg(not(target_arch = "wasm32"))]
 mod support;
-use mimic as reqwest;
+use chromimic as reqwest;
 use support::server;
 
 use std::env;

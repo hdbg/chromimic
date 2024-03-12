@@ -72,7 +72,7 @@ fn get_config_from_ver(ver: Impersonate) -> ImpersonateSettings {
     }
 }
 
-/// Defines the Chrome version to mimic when setting up a builder
+/// Defines the Chrome version to chromimic when setting up a builder
 #[derive(Clone, Debug)]
 #[allow(missing_docs)]
 pub enum Impersonate {

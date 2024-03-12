@@ -1,4 +1,4 @@
-use mimic as reqwest;
+use chromimic as reqwest;
 mod support;
 
 use http::header::CONTENT_TYPE;

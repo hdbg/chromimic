@@ -264,14 +264,14 @@ impl ClientBuilder {
         }
     }
 
-    /// Sets the necessary values to mimic the specified impersonate version.
+    /// Sets the necessary values to chromimic the specified impersonate version.
     #[cfg(feature = "__impersonate")]
     pub fn impersonate(mut self, ver: Impersonate) -> ClientBuilder {
         self.config.client_profile = ver.profile();
         configure_impersonate(ver, self)
     }
 
-    /// Sets the necessary values to mimic the specified impersonate version. (websocket)
+    /// Sets the necessary values to chromimic the specified impersonate version. (websocket)
     #[cfg(feature = "__impersonate")]
     pub fn impersonate_websocket(mut self, ver: Impersonate) -> ClientBuilder {
         self.config.client_profile = ver.profile();

@@ -8,7 +8,7 @@
 //
 // `tokio = { version = "1", features = ["full"] }`
 
-use mimic as reqwest;
+use chromimic as reqwest;
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
