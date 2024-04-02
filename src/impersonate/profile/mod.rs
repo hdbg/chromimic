@@ -153,6 +153,49 @@ impl FromStr for Impersonate {
     }
 }
 
+/// Impersonate version to string
+impl std::fmt::Display for Impersonate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Impersonate as I;
+        let name = match self {
+            I::Chrome99 => "chrome99",
+            I::Chrome100 => "chrome100",
+            I::Chrome101 => "chrome101",
+            I::Chrome104 => "chrome104",
+            I::Chrome105 => "chrome105",
+            I::Chrome106 => "chrome106",
+            I::Chrome108 => "chrome108",
+            I::Chrome107 => "chrome107",
+            I::Chrome109 => "chrome109",
+            I::Chrome114 => "chrome114",
+            I::Chrome116 => "chrome116",
+            I::Chrome117 => "chrome117",
+            I::Chrome118 => "chrome118",
+            I::Chrome119 => "chrome119",
+            I::Chrome120 => "chrome120",
+            I::Safari12 => "safari12",
+            I::Safari15_3 => "safari15_3",
+            I::Safari15_5 => "safari15_5",
+            I::Safari15_6_1 => "safari15_6_1",
+            I::Safari16 => "safari16",
+            I::Safari16_5 => "safari16_5",
+            I::Safari17_2_1 => "safari17_2_1",
+            I::OkHttp3_9 => "okhttp3_9",
+            I::OkHttp3_11 => "okhttp3_11",
+            I::OkHttp3_13 => "okhttp3_13",
+            I::OkHttp3_14 => "okhttp3_14",
+            I::OkHttp4_9 => "okhttp4_9",
+            I::OkHttp4_10 => "okhttp4_10",
+            I::OkHttp5 => "okhttp5",
+            I::Edge99 => "edge99",
+            I::Edge101 => "edge101",
+            I::Edge122 => "edge120",
+        };
+
+        f.write_str(name)
+    }
+}
+
 impl Impersonate {
     /// Get the client profile for the given impersonate version
     pub fn profile(&self) -> ClientProfile {
