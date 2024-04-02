@@ -9,6 +9,7 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 rust-version = "1.63.0"
 autotests = true
+repository = "https://github.com/hdbg/chromimic"
 
 [package.metadata.docs.rs]
 all-features = true
