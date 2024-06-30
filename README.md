@@ -10,8 +10,9 @@ Fork with vendored certificates supports for `boringssl`
 [![MIT/Apache-2 licensed](https://img.shields.io/crates/l/reqwest.svg)](./LICENSE-APACHE)
 [![CI](https://github.com/seanmonstar/reqwest/workflows/CI/badge.svg)](https://github.com/seanmonstar/reqwest/actions?query=workflow%3ACI)
 
-An ergonomic, batteries-included HTTP Client for Rust.
+An ergonomic, batteries-included HTTP / WebSocket Client for Rust.
 
+- Impersonate Chrome / Safari / Edge / OkHttp
 - Plain bodies, JSON, urlencoded, multipart
 - Customizable redirect policy
 - HTTP Proxies
@@ -21,7 +22,11 @@ An ergonomic, batteries-included HTTP Client for Rust.
 - WASM
 - [Changelog](CHANGELOG.md)
 
-> A fork of reqwest used to impersonate the Chrome browser / OkHttp. Inspired by [curl-impersonate](https://github.com/lwthiker/curl-impersonate).
+## Sponsors
+
+[![Capsolver](https://github.com/0x676e67/CapSolver-CloudflareBypass/raw/main/docs/capsolver.jpeg)](https://dashboard.capsolver.com/passport/register?inviteCode=y7CtB_a-3X6d)
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), among others.
+For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
 
 ## Example
 
@@ -31,10 +36,7 @@ optional features, so your `Cargo.toml` could look like this:
 ```toml
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-reqwest_impersonate = { version = "0.11", default-features = false, features = [
-    "boring-tls",
-    "impersonate"
-] }
+reqwest_impersonate = "0.11"
 ```
 
 Or WebSocket:
@@ -42,11 +44,7 @@ Or WebSocket:
 ```toml
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-reqwest_impersonate = { version = "0.11", default-features = false, features = [
-    "boring-tls",
-    "impersonate",
-    "websocket",
-] }
+reqwest_impersonate = { version = "0.11", features = ["websocket"] }
 ```
 
 And then the code:
@@ -58,12 +56,11 @@ use reqwest::impersonate::Impersonate;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Build a client to mimic Chrome120
+    // Build a client to mimic Chrome123
     let client = reqwest::Client::builder()
-        .impersonate(Impersonate::Chrome120)
-        .danger_accept_invalid_certs(true)
-        .enable_ech_grease(true)
-        .permute_extensions(true)
+        .impersonate(Impersonate::Chrome123)
+        .enable_ech_grease()
+        .permute_extensions()
         .cookie_store(true)
         .build()?;
 
@@ -71,11 +68,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let resp = client.get("https://tls.peet.ws/api/all").send().await?;
     println!("{}", resp.text().await?);
 
-    let resp = client
-        .post("https://chat.openai.com/backend-api/conversation")
-        .send().await?;
-    println!("{}", resp.text().await?);
-    
     Ok(())
 }
 ```

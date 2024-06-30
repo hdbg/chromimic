@@ -7,6 +7,8 @@ use std::sync::Arc;
 
 use crate::impersonate::{Http2Data, ImpersonateSettings};
 
+use super::SIGALGS_LIST;
+
 pub(crate) fn get_settings(headers: HeaderMap) -> ImpersonateSettings {
     ImpersonateSettings {
         tls_builder_func: Arc::new(|h2| create_ssl_connector(h2)),
@@ -58,19 +60,7 @@ fn create_ssl_connector(h2: bool) -> SslConnectorBuilder {
 
     builder.set_cipher_list(&cipher_list.join(":")).unwrap();
 
-    let sigalgs_list = [
-        "ecdsa_secp256r1_sha256",
-        "rsa_pss_rsae_sha256",
-        "rsa_pkcs1_sha256",
-        "ecdsa_secp384r1_sha384",
-        "rsa_pss_rsae_sha384",
-        "rsa_pkcs1_sha384",
-        "rsa_pss_rsae_sha512",
-        "rsa_pkcs1_sha512",
-        "rsa_pkcs1_sha1",
-    ];
-
-    builder.set_sigalgs_list(&sigalgs_list.join(":")).unwrap();
+    builder.set_sigalgs_list(&SIGALGS_LIST.join(":")).unwrap();
 
     if h2 {
         builder.set_alpn_protos(b"\x02h2\x08http/1.1").unwrap();
@@ -92,7 +82,7 @@ fn create_ssl_connector(h2: bool) -> SslConnectorBuilder {
 fn create_headers(mut headers: HeaderMap) -> HeaderMap {
     headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
     headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("en-US,en;q=0.9"));
-    headers.insert(USER_AGENT, HeaderValue::from_static("okhttp/3.14"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("DS podcast/2.0.1 (be.standaard.audio; build:9; Android 11; Sdk:30; Manufacturer:samsung; Model: SM-A405FN) OkHttp/3.14.0"));
     headers.insert(
         ACCEPT_ENCODING,
         HeaderValue::from_static("gzip, deflate, br"),

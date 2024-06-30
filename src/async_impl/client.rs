@@ -33,8 +33,8 @@ use crate::async_impl::h3_client::{H3Client, H3ResponseFuture};
 use crate::connect::{Connector, ImpersonateContext};
 #[cfg(feature = "cookies")]
 use crate::cookie;
-#[cfg(feature = "trust-dns")]
-use crate::dns::trust_dns::TrustDnsResolver;
+#[cfg(feature = "hickory-dns")]
+use crate::dns::hickory::HickoryDnsResolver;
 use crate::dns::{gai::GaiResolver, DnsResolverWithOverrides, DynResolver, Resolve};
 use crate::error;
 #[cfg(feature = "impersonate")]
@@ -144,7 +144,7 @@ struct Config {
     nodelay: bool,
     #[cfg(feature = "cookies")]
     cookie_store: Option<Arc<dyn cookie::CookieStore>>,
-    trust_dns: bool,
+    hickory_dns: bool,
     error: Option<crate::Error>,
     https_only: bool,
     #[cfg(feature = "http3")]
@@ -160,7 +160,7 @@ struct Config {
     dns_overrides: HashMap<String, Vec<SocketAddr>>,
     dns_resolver: Option<Arc<dyn Resolve>>,
     #[cfg(feature = "impersonate")]
-    client_profile: ClientProfile,
+    profile: ClientProfile,
     #[cfg(feature = "impersonate")]
     enable_ech_grease: bool,
     #[cfg(feature = "impersonate")]
@@ -238,7 +238,7 @@ impl ClientBuilder {
                 local_address_ipv6: None,
                 local_address_ipv4: None,
                 nodelay: true,
-                trust_dns: cfg!(feature = "trust-dns"),
+                hickory_dns: cfg!(feature = "hickory-dns"),
                 #[cfg(feature = "cookies")]
                 cookie_store: None,
                 https_only: false,
@@ -255,7 +255,7 @@ impl ClientBuilder {
                 quic_send_window: None,
                 dns_resolver: None,
                 #[cfg(feature = "impersonate")]
-                client_profile: ClientProfile::Chrome,
+                profile: ClientProfile::Chrome,
                 #[cfg(feature = "impersonate")]
                 enable_ech_grease: false,
                 #[cfg(feature = "impersonate")]
@@ -267,29 +267,29 @@ impl ClientBuilder {
     /// Sets the necessary values to chromimic the specified impersonate version.
     #[cfg(feature = "__impersonate")]
     pub fn impersonate(mut self, ver: Impersonate) -> ClientBuilder {
-        self.config.client_profile = ver.profile();
+        self.config.profile = ver.profile();
         configure_impersonate(ver, self)
     }
 
     /// Sets the necessary values to chromimic the specified impersonate version. (websocket)
     #[cfg(feature = "__impersonate")]
     pub fn impersonate_websocket(mut self, ver: Impersonate) -> ClientBuilder {
-        self.config.client_profile = ver.profile();
+        self.config.profile = ver.profile();
         self = self.http1_only();
         configure_impersonate(ver, self)
     }
 
     /// Enable Encrypted Client Hello (Secure SNI)
     #[cfg(feature = "__impersonate")]
-    pub fn enable_ech_grease(mut self, enable: bool) -> ClientBuilder {
-        self.config.enable_ech_grease = enable;
+    pub fn enable_ech_grease(mut self) -> ClientBuilder {
+        self.config.enable_ech_grease = true;
         self
     }
 
     /// Enable TLS permute_extensions
     #[cfg(feature = "__impersonate")]
-    pub fn permute_extensions(mut self, enable: bool) -> ClientBuilder {
-        self.config.permute_extensions = enable;
+    pub fn permute_extensions(mut self) -> ClientBuilder {
+        self.config.permute_extensions = true;
         self
     }
 
@@ -322,12 +322,12 @@ impl ClientBuilder {
                 headers.get(USER_AGENT).cloned()
             }
 
-            let mut resolver: Arc<dyn Resolve> = match config.trust_dns {
+            let mut resolver: Arc<dyn Resolve> = match config.hickory_dns {
                 false => Arc::new(GaiResolver::new()),
-                #[cfg(feature = "trust-dns")]
-                true => Arc::new(TrustDnsResolver::default()),
-                #[cfg(not(feature = "trust-dns"))]
-                true => unreachable!("trust-dns shouldn't be enabled unless the feature is"),
+                #[cfg(feature = "hickory-dns")]
+                true => Arc::new(HickoryDnsResolver::default()),
+                #[cfg(not(feature = "hickory-dns"))]
+                true => unreachable!("hickory-dns shouldn't be enabled unless the feature is"),
             };
             if let Some(dns_resolver) = config.dns_resolver {
                 resolver = dns_resolver;
@@ -428,7 +428,7 @@ impl ClientBuilder {
                         config.nodelay,
                         config.tls_info,
                         ImpersonateContext {
-                            client_profile: config.client_profile,
+                            profile: config.profile,
                             certs_verification: config.certs_verification,
                             enable_ech_grease: config.enable_ech_grease,
                             permute_extensions: config.permute_extensions,
@@ -763,7 +763,7 @@ impl ClientBuilder {
             builder.http2_keep_alive_while_idle(true);
         }
 
-        builder.http2_agent_profile(config.client_profile.into());
+        builder.http2_agent_profile(config.profile.into());
         builder.pool_idle_timeout(config.pool_idle_timeout);
         builder.pool_max_idle_per_host(config.pool_max_idle_per_host);
         connector.set_keepalive(config.tcp_keepalive);
@@ -997,6 +997,29 @@ impl ClientBuilder {
         self
     }
 
+    /// Enable auto zstd decompression by checking the `Content-Encoding` response header.
+    ///
+    /// If auto zstd decompression is turned on:
+    ///
+    /// - When sending a request and if the request's headers do not already contain
+    ///   an `Accept-Encoding` **and** `Range` values, the `Accept-Encoding` header is set to `zstd`.
+    ///   The request body is **not** automatically compressed.
+    /// - When receiving a response, if its headers contain a `Content-Encoding` value of
+    ///   `zstd`, both `Content-Encoding` and `Content-Length` are removed from the
+    ///   headers' set. The response body is automatically decompressed.
+    ///
+    /// If the `zstd` feature is turned on, the default option is enabled.
+    ///
+    /// # Optional
+    ///
+    /// This requires the optional `zstd` feature to be enabled
+    #[cfg(feature = "zstd")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "zstd")))]
+    pub fn zstd(mut self, enable: bool) -> ClientBuilder {
+        self.config.accepts.zstd = enable;
+        self
+    }
+
     /// Enable auto deflate decompression by checking the `Content-Encoding` response header.
     ///
     /// If auto deflate decompression is turned on:
@@ -1018,6 +1041,23 @@ impl ClientBuilder {
     pub fn deflate(mut self, enable: bool) -> ClientBuilder {
         self.config.accepts.deflate = enable;
         self
+    }
+
+    /// Disable auto response body zstd decompression.
+    ///
+    /// This method exists even if the optional `zstd` feature is not enabled.
+    /// This can be used to ensure a `Client` doesn't use zstd decompression
+    /// even if another dependency were to enable the optional `zstd` feature.
+    pub fn no_zstd(self) -> ClientBuilder {
+        #[cfg(feature = "zstd")]
+        {
+            self.zstd(false)
+        }
+
+        #[cfg(not(feature = "zstd"))]
+        {
+            self
+        }
     }
 
     /// Disable auto response body gzip decompression.
@@ -1717,32 +1757,32 @@ impl ClientBuilder {
         self
     }
 
-    /// Enables the [trust-dns](trust_dns_resolver) async resolver instead of a default threadpool using `getaddrinfo`.
+    /// Enables the [hickory-dns](hickory_dns_resolver) async resolver instead of a default threadpool using `getaddrinfo`.
     ///
-    /// If the `trust-dns` feature is turned on, the default option is enabled.
+    /// If the `hickory-dns` feature is turned on, the default option is enabled.
     ///
     /// # Optional
     ///
-    /// This requires the optional `trust-dns` feature to be enabled
-    #[cfg(feature = "trust-dns")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "trust-dns")))]
-    pub fn trust_dns(mut self, enable: bool) -> ClientBuilder {
-        self.config.trust_dns = enable;
+    /// This requires the optional `hickory-dns` feature to be enabled
+    #[cfg(feature = "hickory-dns")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "hickory-dns")))]
+    pub fn hickory_dns(mut self, enable: bool) -> ClientBuilder {
+        self.config.hickory_dns = enable;
         self
     }
 
-    /// Disables the trust-dns async resolver.
+    /// Disables the hickory-dns async resolver.
     ///
-    /// This method exists even if the optional `trust-dns` feature is not enabled.
-    /// This can be used to ensure a `Client` doesn't use the trust-dns async resolver
-    /// even if another dependency were to enable the optional `trust-dns` feature.
-    pub fn no_trust_dns(self) -> ClientBuilder {
-        #[cfg(feature = "trust-dns")]
+    /// This method exists even if the optional `hickory-dns` feature is not enabled.
+    /// This can be used to ensure a `Client` doesn't use the hickory-dns async resolver
+    /// even if another dependency were to enable the optional `hickory-dns` feature.
+    pub fn no_hickory_dns(self) -> ClientBuilder {
+        #[cfg(feature = "hickory-dns")]
         {
-            self.trust_dns(false)
+            self.hickory_dns(false)
         }
 
-        #[cfg(not(feature = "trust-dns"))]
+        #[cfg(not(feature = "hickory-dns"))]
         {
             self
         }

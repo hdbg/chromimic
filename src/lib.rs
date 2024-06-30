@@ -189,12 +189,13 @@
 //! - **cookies**: Provides cookie session support.
 //! - **gzip**: Provides response body gzip decompression.
 //! - **brotli**: Provides response body brotli decompression.
+//! - **zstd**: Provides response body zstd decompression.
 //! - **deflate**: Provides response body deflate decompression.
 //! - **json**: Provides serialization and deserialization for JSON bodies.
 //! - **multipart**: Provides functionality for multipart forms.
 //! - **stream**: Adds support for `futures::Stream`.
 //! - **socks**: Provides SOCKS5 proxy support.
-//! - **trust-dns**: Enables a trust-dns async resolver instead of default
+//! - **hickory-dns**: Enables a hickory-dns async resolver instead of default
 //!   threadpool using `getaddrinfo`.
 //!
 //! ## Unstable Features
@@ -345,7 +346,7 @@ if_hyper! {
         Body, Client, ClientBuilder, Request, RequestBuilder, Response, Upgraded
     };
     #[cfg(feature = "websocket")]
-    pub use self::async_impl::websocket::{Message, WebSocket, UpgradeResponse};
+    pub use self::async_impl::websocket::{UpgradedRequestBuilder, Message, WebSocket, UpgradeResponse};
     pub use self::proxy::{Proxy,NoProxy};
     #[cfg(feature = "__tls")]
     // Re-exports, to be removed in a future release

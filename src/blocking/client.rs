@@ -98,15 +98,15 @@ impl ClientBuilder {
 
     /// Enable Encrypted Client Hello (Secure SNI)
     #[cfg(feature = "__impersonate")]
-    pub fn enable_ech_grease(self, enable: bool) -> ClientBuilder {
-        self.with_inner(move |inner| inner.enable_ech_grease(enable))
+    pub fn enable_ech_grease(self) -> ClientBuilder {
+        self.with_inner(move |inner| inner.enable_ech_grease())
     }
 
 
     /// Enable TLS permute_extensions
     #[cfg(feature = "__impersonate")]
-    pub fn permute_extensions(self, enable: bool) -> ClientBuilder {
-        self.with_inner(move |inner| inner.permute_extensions(enable))
+    pub fn permute_extensions(self) -> ClientBuilder {
+        self.with_inner(move |inner| inner.permute_extensions())
     }
 
     /// Returns a `Client` that uses this `ClientBuilder` configuration.
@@ -281,6 +281,28 @@ impl ClientBuilder {
         self.with_inner(|inner| inner.brotli(enable))
     }
 
+    /// Enable auto zstd decompression by checking the `Content-Encoding` response header.
+    ///
+    /// If auto zstd decompression is turned on:
+    ///
+    /// - When sending a request and if the request's headers do not already contain
+    ///   an `Accept-Encoding` **and** `Range` values, the `Accept-Encoding` header is set to `zstd`.
+    ///   The request body is **not** automatically compressed.
+    /// - When receiving a response, if its headers contain a `Content-Encoding` value of
+    ///   `zstd`, both `Content-Encoding` and `Content-Length` are removed from the
+    ///   headers' set. The response body is automatically decompressed.
+    ///
+    /// If the `zstd` feature is turned on, the default option is enabled.
+    ///
+    /// # Optional
+    ///
+    /// This requires the optional `zstd` feature to be enabled
+    #[cfg(feature = "zstd")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "zstd")))]
+    pub fn zstd(self, enable: bool) -> ClientBuilder {
+        self.with_inner(|inner| inner.zstd(enable))
+    }
+
     /// Enable auto deflate decompression by checking the `Content-Encoding` response header.
     ///
     /// If auto deflate decompresson is turned on:
@@ -319,6 +341,15 @@ impl ClientBuilder {
     /// even if another dependency were to enable the optional `brotli` feature.
     pub fn no_brotli(self) -> ClientBuilder {
         self.with_inner(|inner| inner.no_brotli())
+    }
+
+    /// Disable auto response body zstd decompression.
+    ///
+    /// This method exists even if the optional `zstd` feature is not enabled.
+    /// This can be used to ensure a `Client` doesn't use zstd decompression
+    /// even if another dependency were to enable the optional `zstd` feature.
+    pub fn no_zstd(self) -> ClientBuilder {
+        self.with_inner(|inner| inner.no_zstd())
     }
 
     /// Disable auto response body deflate decompression.
@@ -837,26 +868,26 @@ impl ClientBuilder {
         self.with_inner(move |inner| inner.use_preconfigured_tls(tls))
     }
 
-    /// Enables the [trust-dns](trust_dns_resolver) async resolver instead of a default threadpool using `getaddrinfo`.
+    /// Enables the [hickory-dns](hickory_dns_resolver) async resolver instead of a default threadpool using `getaddrinfo`.
     ///
-    /// If the `trust-dns` feature is turned on, the default option is enabled.
+    /// If the `hickory-dns` feature is turned on, the default option is enabled.
     ///
     /// # Optional
     ///
-    /// This requires the optional `trust-dns` feature to be enabled
-    #[cfg(feature = "trust-dns")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "trust-dns")))]
-    pub fn trust_dns(self, enable: bool) -> ClientBuilder {
-        self.with_inner(|inner| inner.trust_dns(enable))
+    /// This requires the optional `hickory-dns` feature to be enabled
+    #[cfg(feature = "hickory-dns")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "hickory-dns")))]
+    pub fn hickory_dns(self, enable: bool) -> ClientBuilder {
+        self.with_inner(|inner| inner.hickory_dns(enable))
     }
 
-    /// Disables the trust-dns async resolver.
+    /// Disables the hickory-dns async resolver.
     ///
-    /// This method exists even if the optional `trust-dns` feature is not enabled.
-    /// This can be used to ensure a `Client` doesn't use the trust-dns async resolver
-    /// even if another dependency were to enable the optional `trust-dns` feature.
-    pub fn no_trust_dns(self) -> ClientBuilder {
-        self.with_inner(|inner| inner.no_trust_dns())
+    /// This method exists even if the optional `hickory-dns` feature is not enabled.
+    /// This can be used to ensure a `Client` doesn't use the hickory-dns async resolver
+    /// even if another dependency were to enable the optional `hickory-dns` feature.
+    pub fn no_hickory_dns(self) -> ClientBuilder {
+        self.with_inner(|inner| inner.no_hickory_dns())
     }
 
     /// Restrict the Client to be used with HTTPS only requests.
@@ -1220,6 +1251,7 @@ impl Default for Timeout {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) struct KeepCoreThreadAlive(Option<Arc<InnerClientHandle>>);
 
 impl KeepCoreThreadAlive {
