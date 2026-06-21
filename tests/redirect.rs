@@ -1,8 +1,8 @@
 #![cfg(not(target_arch = "wasm32"))]
 mod support;
+use chromimic as reqwest;
 use futures_util::stream::StreamExt;
 use hyper::Body;
-use chromimic as reqwest;
 use support::*;
 
 #[tokio::test]
